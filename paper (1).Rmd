@@ -1,0 +1,188 @@
+---
+title: "Crime statistics in Toronto"
+subtitle: "A comprehensive breakdown of crimes in various Toronto neighbourhoods"
+author: 
+  - Avinash Dindial
+thanks: "Code and data are available at:https://github.com/avi868/Toronto-Crime"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "Toronto was ranked the 24th safest city in the world so it may be worthwhile to measure crime as this directly affects quality of life in a society.This paper analyzes crime in 140 neighbourhoods in Toronto and seeks to display these findings by way of graphs and tables. It was noticed that there was a general increase in various crimes in almost all neighbourhoods in Toronto. Our findings may be useful to the police as it may show trends that they can use such as increasing police presence in areas that are becoming more crime ridden."
+output:
+  bookdown::pdf_document2
+toc: FALSE
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+library(tidyverse)
+crime_rate <- read_csv(here::here("inputs/data/crime_rate_toronto.csv"))
+
+```
+
+# Introduction
+
+Fear of crime directly affects quality of life [@citechristmann2004crime]. As such, crime rates should be lower in countries that boast a high quality of life. Toronto was recently voted as one of the safest cities to live, so this paper seeks to analyse the crime rates of Toronto neighborhoods to see if Toronto is deserving of being labeled as safe. In addition, and more importantly, this paper also seeks to aid police in recognizing potentially useful trends in the data which may ultimately play a part in stopping the noticeable general increase in crime in Toronto. It is my belief that predictive policing may be the way in which we deal with crime. Rather than waiting for crimes to happen and then attempt to solve them, I propose we can predict where and perhaps when future crimes can take place and put the necessary steps in place to prevent them from happening in the first place. 
+In addition to this, data on crimes give us information on budget planning.
+
+Section \@ref(data) describes the data along with other manipulation done to visualize the data. furthermore I will attempt to compare data trends over a period of time to make some educated inferences. Due to the large amount of data in this data set it was decided to use a neighborhood with a high crime rate(Moss Park), attempt to analyze its data through the years 2014 to 2020 and potentially draw some conclusions from the data. It was found that there was an increase in all types of crime in this neighborhood.With the exception of shootings, there was an overall increase in both violent and non-violent crimes in this neighborhood. Such trends may be of interest to other parties apart from police service. For instance, housing prices may directly be affected by the same data explored in this paper. Implications of rising crime affects all members of the community as such it is important public safety be a priority for police service. Curiously, it was seen that there is a high correlation between crimes. If a neighborhood has a high rate of assault, it is likely to also have a high rate of homicides and other crimes. 
+
+Trends like these can give us some sort of predictive power which can make policing more efficient. Given public outcries to de-fund the police and general budget cuts due to COVID and other factors, police services around the world may be stretched for resources. For instance, with the use of historic data, Richmond’s police department tried to forecast where gun firing would occur on New Year’s Eve, in 2003 and the random gunfire decreased on this night with 47% [@pearsall].In addition to this, the crime index of New York decreased with 6% since the implementation of a predictive policing model [@citemeijer]. 
+
+
+
+ 
+
+
+
+# Data
+This data was sourced from City of Toronto open data portal using `opendatatoronto`package [@citeopendatatoronto].  Graphs and tables were plotted using R software [@citeR] and the tidyverse package [@citetidyverse]. Tables were drawn using the knitr package [@citeknitr] Data that uses population estimates were calculated using estimates from Environics Analytics. It should be noted that these estimates only took into consideration local residents, so no commuters etc., were taken into account. In addition, it is known that a substantial number of crimes go unreported which may affect some claims in this paper.  All data were obtained from the Toronto Police Service and no private or personal information were used in this data set. 
+
+The data collected details various crimes: robbery, assault, shootings, homicide, auto theft and breaking and entering and is updated yearly. For each of these crimes, data from 2014-2020 were collected on the number of occurrences of these crimes in each neighborhood as well as their corresponding rate i.e., per 100,000 residents. In total, there are 140 data points each with 104 variables. This made it messy to do any meaningful analysis so I focused on the top 10 neighborhoods that had the highest arbitrary crime rate. It is important to know that there are many different factors that can go into the crime rate of a neighborhood. Simply labeling them as dangerous while ignoring possible confounding variables can have negative consequences on those communities. Possible consequences being that potential businesses or people may be hesitant to join these communities.
+
+
+
+
+ (Figure \@ref(tab:table1)) provided a small glimpse at our data set. It shows the first 10 neighborhoods in Toronto and their corresponding vehicle theft rate for the year 2020. 
+
+``` {r table1, fig.cap="Vehicle theft rate in 2020 for 10 neighbourhoods", echo = FALSE}
+crime_rate%>%select(Neighbourhood, AutoTheft_Rate2020)%>%
+  slice(1:10)%>%
+  kable(caption = "First 10 Neighbourhoods' Auto theft rate for 2020",
+        col.names = c("Neighbourhood", "Theft Rate"), 
+        digits = 1,
+        booktabs = TRUE,
+        linesep = " ")
+
+```
+
+
+``` {r plot1, plot2, plot3, plot4,  fig.cap="Table showing each neighbhourhood's assault rate for 2020", echo = FALSE, fig.width=8, fig.height=4, message = FALSE}
+crime_rate1 <- crime_rate%>%slice(1:25)
+ggplot(crime_rate1, aes(x = Assault_Rate2020,y = Neighbourhood)) +
+  geom_point(alpha = 0.8) 
+crime_rate2 <- crime_rate%>%slice(25:50)
+crime_rate3 <- crime_rate%>%slice(50:75)
+crime_rate4 <- crime_rate%>%slice(75:104)
+ggplot(crime_rate2, aes(x = Assault_Rate2020,y = Neighbourhood)) +
+  geom_point(alpha = 0.8) 
+ggplot(crime_rate3, aes(x = Assault_Rate2020,y = Neighbourhood)) +
+  geom_point(alpha = 0.8) 
+ggplot(crime_rate4, aes(x = Assault_Rate2020,y = Neighbourhood)) +
+  geom_point(alpha = 0.8) 
+
+  
+```
+
+These graphs show the assault rate of all neighborhoods in Toronto. Since our data set is very large, I will only focus on the top 10 neighborhoods with the highest assault rate.Specifically, Moss Park is noted to have the highest assault rate so I will mainly focus on this neighborhood. 
+
+
+
+
+\newpage
+
+
+
+(Figure \@ref(tab:table3)) shows the 10 neighborhoods with the highest Assault Rate
+
+```{r table3, echo= FALSE, fig.cap= "Graphs showing the increase in all types of crime from 2014 to 2020 in Moss Park",fig.width=8, fig.height=3}
+crime_rate_toronto <- crime_rate[with(crime_rate,order(-Assault_Rate2020)),]
+crime_rate_toronto <- crime_rate_toronto[1:10,]
+crime_rate_toronto%>%select(Neighbourhood, Assault_Rate2020)%>%
+  slice(1:10)%>%
+  kable(caption = "Top 10 neighborhoods with highest Assault Rate in 2020",
+        col.names = c("Neighbourhood", "Theft Rate"), 
+        digits = 1,
+        booktabs = TRUE,
+        linesep = " ")
+##Moss Park is the highest. To see trends in this particular neighborhood:
+moss_park<- crime_rate_toronto%>%filter(Neighbourhood=="Moss Park")
+Shootings_Rate <- c(moss_park$Shooting_Rate2014,moss_park$Shootings_Rate2015, moss_park$Shootings_Rate2016,moss_park$Shootings_Rate2017,moss_park$Shootings_Rate2018,moss_park$Shootings_Rate2019,moss_park$Shootings_Rate2020)
+Auto_Theft_Rate <- c(moss_park$AutoTheft_2014, moss_park$AutoTheft_2015,moss_park$AutoTheft_2016,moss_park$AutoTheft_2017,moss_park$AutoTheft_2018,moss_park$AutoTheft_2019,moss_park$AutoTheft_2020)
+Break_Enter_Rate <- c(moss_park$BreakAndEnter_Rate2014,moss_park$BreakAndEnter_Rate2015, moss_park$BreakAndEnter_Rate2016, moss_park$BreakAndEnter_Rate2017, moss_park$BreakAndEnter_Rate2018, moss_park$BreakAndEnter_Rate2019, moss_park$BreakAndEnter_Rate2020 )
+Homicide_Rate <-c(moss_park$Homicide_Rate2014, moss_park$Homicide_Rate2015,moss_park$Homicide_Rate2016,moss_park$Homicide_Rate2017,moss_park$Homicide_Rate2018,moss_park$Homicide_Rate2019,moss_park$Homicide_Rate2020)
+```
+
+It was noted that Moss Park is the one of the most crime-ridden neighborhoods in Toronto. A surprising observation made was that breaking and entering in Moss Park increased during the COVID pandemic which was a period of time where people were to stay at home. In addition, the homicide rate was seen to drop during this time. Perhaps the COVID pandemic played a role in these two observations. These breaking and entering crimes may be mostly targeted towards businesses. The COVID situation saw a mass loss of jobs for a significant percentage of the population so it is not far fetched to link these two together.
+According to the Toronto Life, Moss Park is home to numerous homeless shelters. This place is almost all rented out, and houses are occupied by low-income families [@citekumbi]. 
+So, now we have shown some variables that might directly affect crime: homeless persons population and poverty rate. This is substantiated by literature as well as from observations made from our data set. The task of the police service now is to look for areas with such characteristics as they might be more likely to be dangerous. As for the Government of Canada, it should be prudent to put social programs in place in these neighborhoods to help alleviate those out of poverty and homelessness and into a more meaningful and comfortable life.  
+
+The fact that the crime rate in Moss Park has been steadily increasing over the years shows that the police service needs to do more in these communities in dealing with crime. It would be unfortunate to think the police service is not aware of these trends or that they cannot come to the same conclusions drawn in this paper. Rather than dealing with the evidently increasing number of all types of crimes in this neighborhood, it may be time to take a more preemptive approach.
+
+
+
+
+
+
+
+
+```{r plots1, fig.cap="Crime Rates from 2014 to 2020 in Moss Park", message=FALSE, echo=FALSE}
+barplot(Shootings_Rate,xlab = "Years 2014 - 2020", ylab = "Shooting Rate")
+```
+
+Figure \@ref(fig:plots1) shows the trend of shooting incidents from 2014 to 2020
+
+```{r plot2, fig.cap="Auto-theft Rates from 2014 to 2020 in Moss Park", echo= FALSE}
+barplot(Auto_Theft_Rate,xlab = "Years 2014 - 2020", ylab = "Auto Theft Rate")
+```
+
+Figure \@ref(fig:plot2) shows the trend of auto thefts from 2014 to 2020
+
+```{r plot3, fig.cap="Breaking and Entering Rates from 2014 to 2020 in Moss Park", echo=FALSE}
+barplot(Break_Enter_Rate, xlab = "Years 2014 -2020", ylab= "Breaking & Entering Rate")
+```
+
+
+Figure \@ref(fig:plot3) shows the trend of Breaking and Entering from 2014 to 2020
+
+```{r plot4, fig.cap="Homicide Rates from 2014 to 2020 in Moss Park", echo=FALSE}
+barplot(Homicide_Rate, xlab= "Years 2014-2020", ylab= "Homicide Rate")
+
+
+```
+
+Figure  \@ref(fig:plot4) shows the trend of Homicides from 2014 to 2020
+
+
+
+
+
+
+``` {r table4, fig.cap="Vehicle theft rate in 2020 for 10 neighbourhoods", echo = FALSE}
+
+crime_rateHomicide <- crime_rate[with(crime_rate,order(-Homicide_Rate2020)),]
+crime_rateHomicide <- crime_rate_toronto[1:10,]
+crime_rateHomicide%>%select(Neighbourhood, Homicide_Rate2020)%>%
+  slice(1:10)%>%
+  kable(caption = "Top 10 neighbourhoods with highest homicide rate in 2020",
+        col.names = c("Neighbourhood", "Homicide Rate"), 
+        digits = 1,
+        booktabs = TRUE,
+        linesep = "")
+
+```
+
+
+
+
+
+```{r forest, fig.cap= "Homicide Rate in Forest Hill from 2014 to 2020", echo=FALSE}
+foresthill <- crime_rate%>%filter(Neighbourhood == "Forest Hill South")
+foresthill_assault <- c(foresthill$Assault_Rate2014,foresthill$Assault_Rate2015, foresthill$Assault_Rate2016, foresthill$Assault_Rate2017,foresthill$Assault_Rate2018,foresthill$Assault_Rate2019,foresthill$Assault_Rate2020)
+foresthill_homicide <- c(foresthill$Homicide_Rate2014,foresthill$Homicide_Rate2015,foresthill$Homicide_Rate2016,foresthill$Homicide_Rate2017,foresthill$Homicide_Rate2018,foresthill$Homicide_Rate2019,foresthill$Homicide_Rate2020)
+barplot(foresthill_homicide,xlab = "Years 2014 - 2020", ylab = "Homicide Rate")
+
+
+
+```
+
+\newpage
+Table \@ref(tab:table4) shows the neighborhoods with the highest homicide rate. Notice it is exactly identical to Table \@ref(tab:table3).Compare this with the homicide rate of one of Toronto's most affluent neighborhoods, Forest Hill South. 
+From Figure \@ref(fig:forest) we see this neighborhood has virtually zero murders in the same period 2014-2020. This disparity in crime can be attributed to numerous factors such as education. In neighborhoods with low property crime rates, half of the residents have a university degree, whereas this percentage drops to one third in neighborhoods with high property crime rates [@citecharron2011]. In any case, it would be of interest for police to focus on the less educated, poorer neighborhoods as these characteristics are highly correlated to crime. In addition to this, in Moss Park, there is a general increase in all crimes, so it may be of use to the police to know this information and act to stop this upward trend. By detecting areas rising in crime, it is my hope that there will be measures in place to stop this rise in crime. 
+Perhaps an alternative approach to reducing crime may be in promoting a better educated population. With respect to Canada, it is among one of the most educated populations in the world and this is reflected in a high quality of life rating. 
+\newpage
+
+
+# References
+
+
